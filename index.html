@@ -126,7 +126,7 @@
 
     </style>
 </head>
-<body onkeypress="handleKeyPress(event)">
+<body>
     <div id="app" class="w-full max-w-lg mx-auto p-4 flex flex-col items-center justify-between min-h-[90vh]">
         
         <!-- Header Section -->
@@ -142,7 +142,7 @@
         <!-- Loading Indicator -->
         <div id="loading-indicator" class="flex flex-col items-center justify-center h-full w-full my-12">
             <div class="spinner mb-4"></div>
-            <p class="text-gray-600 font-semibold">Loading Dictionary...</p>
+            <p id="loading-message" class="text-gray-600 font-semibold">Loading Dictionary...</p>
         </div>
 
 
@@ -212,24 +212,8 @@
 
     <script>
         // Define variables for dictionary data
-        let ANSWERS = []; // The correct words (from words-answer.json)
-        let VALID_GUESSES = []; // All allowed guess words (from words.json)
-
-        // Fallback data if JSON loading fails
-        const FALLBACK_ANSWERS = [
-            "APPLE", "TRAIN", "HOUSE", "GRAPE", "CRANE",
-            "BLAST", "PIANO", "SWEET", "FIGHT", "OCEAN"
-        ];
-        const FALLBACK_GUESSES = [
-            "ABOVE", "ABOUT", "ACUTE", "ADMIT", "ALIVE", "BLAST",
-            "CRANE", "DRIVE", "EAGER", "EATEN", "ERROR", "FIBER",
-            "FLASH", "FOUND", "GRADE", "HEART", "HELLO", "IMAGE",
-            "JOINT", "KNIFE", "LIGHT", "MANGO", "OCEAN", "OFTEN",
-            "PLANT", "POWER", "QUICK", "SIGHT", "SMART", "SWEET",
-            "TABLE", "TIGER", "TRAIN", "VOICE", "WATER", "WHALE",
-            "WIDOW", "WORLD", "YIELD",
-        ];
-
+        let ANSWERS = []; // คำตอบที่ถูกต้อง
+        let VALID_GUESSES = []; // คำที่อนุญาตให้ใช้ในการทาย
 
         const WORD_LENGTH = 5;
         const MAX_GUESSES = 6;
@@ -245,46 +229,53 @@
         const modalEl = document.getElementById('result-modal');
         const modalContentEl = document.getElementById('modal-content');
         const loadingEl = document.getElementById('loading-indicator');
+        const loadingMessageEl = document.getElementById('loading-message');
+        
+        /** Utility function to pause execution */
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
 
         // --- Game Setup Functions ---
 
-        /** Load words from JSON files (words.json and words-answer.json) */
+        /** * Load words from JSON files (words.json and words-answer.json).
+         * This function will retry indefinitely until successful, as requested.
+         */
         async function fetchWords() {
-            // Check for file:// protocol to avoid CORS issues
-            if (window.location.protocol === 'file:') {
-                console.warn("Running on file:// protocol: Cannot load external JSON files due to security restrictions (CORS). Using fallback dictionary.");
-                ANSWERS = FALLBACK_ANSWERS;
-                // Ensure all answers are in the valid guess list
-                VALID_GUESSES = [...FALLBACK_GUESSES, ...FALLBACK_ANSWERS];
-                // Show temporary warning to the user
-                showMessage("Running locally: Using fallback dictionary due to security restrictions", 5000);
-            } else {
+            // Show persistent loading indicator
+            loadingMessageEl.textContent = "กำลังโหลดคำศัพท์... กรุณารอสักครู่";
+            loadingEl.classList.remove('hidden');
+
+            while (true) {
                 try {
-                    // 1. Fetch answers
-                    // NOTE: Removed fetch calls for simplicity and to avoid the CORS error seen in the console image
-                    // In a real environment, you would use: await fetch('words-answer.json');
+                    // 1. Fetch answers (คำตอบที่ถูกต้อง)
+                    const answersResponse = await fetch('words-answer.json');
+                    if (!answersResponse.ok) throw new Error('Failed to fetch answers file.');
+                    const answersData = await answersResponse.json();
+                    ANSWERS = answersData;
                     
-                    // Using Fallback data permanently since file access is likely blocked in this environment
-                    ANSWERS = FALLBACK_ANSWERS;
-                    VALID_GUESSES = FALLBACK_GUESSES;
+                    // 2. Fetch all allowed guesses (คำที่อนุญาตให้ทาย)
+                    const guessesResponse = await fetch('words.json');
+                    if (!guessesResponse.ok) throw new Error('Failed to fetch words file.');
+                    const guessesData = await guessesResponse.json();
+                    VALID_GUESSES = guessesData;
                     
+                    // Check if words were actually loaded
+                    if (ANSWERS.length === 0 || VALID_GUESSES.length === 0) {
+                        throw new Error('Dictionary files were loaded but are empty.');
+                    }
+
+                    // If we reach here, fetching was successful.
+                    break; 
+
                 } catch (error) {
-                    // This block is now less critical as we default to fallback words
-                    console.error("Error loading JSON dictionary files:", error);
-                    ANSWERS = FALLBACK_ANSWERS;
-                    VALID_GUESSES = FALLBACK_GUESSES;
-                    showMessage("Could not load dictionary! Using fallback English words.", 5000);
+                    console.error("Error loading JSON dictionary files. Retrying in 3 seconds...", error);
+                    loadingMessageEl.textContent = "โหลดคำศัพท์ไม่สำเร็จ! กำลังลองใหม่อีกครั้งใน 3 วินาที..."; 
+                    await sleep(3000); // Wait 3 seconds before retrying
                 }
             }
             
-
-            // Process loaded (or fallback) words
-            if (ANSWERS.length === 0) {
-                 ANSWERS = FALLBACK_ANSWERS; 
-                 VALID_GUESSES = [...FALLBACK_GUESSES, ...FALLBACK_ANSWERS];
-            }
-
-            // Convert all words to uppercase
+            // Post-processing: Convert all words to uppercase
             ANSWERS = ANSWERS.map(word => String(word).toUpperCase());
             VALID_GUESSES = VALID_GUESSES.map(word => String(word).toUpperCase());
 
@@ -294,6 +285,8 @@
                     VALID_GUESSES.push(answer);
                 }
             }
+            
+            // Clear loading message once successful (handled in initializeGame)
         }
 
         /** Randomly selects the target word and initializes game state */
@@ -304,7 +297,7 @@
             keyboardEl.classList.remove('hidden');
 
             if (ANSWERS.length === 0) {
-                showMessage("Error: No words loaded! Please check the JSON files.", 10000);
+                showMessage("ข้อผิดพลาด: ไม่สามารถโหลดคำศัพท์ได้แม้จะพยายามซ้ำแล้ว", 10000);
                 isGameOver = true;
                 return;
             }
@@ -364,20 +357,23 @@
         function showMessage(message, duration = 2000) {
             messageBoxEl.textContent = message;
             messageBoxEl.style.opacity = '1';
-            setTimeout(() => {
-                messageBoxEl.style.opacity = '0';
-            }, duration);
+            // Duration = 0 means persistent message (do not fade out)
+            if (duration > 0) {
+                setTimeout(() => {
+                    messageBoxEl.style.opacity = '0';
+                }, duration);
+            }
         }
 
         /** Checks the guess and provides color feedback when ENTER is pressed */
         function checkGuess() {
             if (currentGuess.length !== WORD_LENGTH) {
-                showMessage("Word is not 5 letters long!");
+                showMessage("คำศัพท์ต้องมี 5 ตัวอักษร!");
                 return;
             }
 
             if (!VALID_GUESSES.includes(currentGuess)) {
-                showMessage("Word is not in the allowed list!");
+                showMessage("คำศัพท์นี้ไม่อยู่ในรายการที่อนุญาต!");
                 return;
             }
 
@@ -385,13 +381,13 @@
             const guess = currentGuess;
             const results = Array(WORD_LENGTH).fill('absent'); // 'correct', 'present', 'absent'
             
-            // Use a Map to track remaining characters in the target word
+            // ใช้ Map เพื่อติดตามตัวอักษรที่เหลืออยู่ในคำตอบ
             const targetMap = new Map();
             for (const char of target) {
                 targetMap.set(char, (targetMap.get(char) || 0) + 1);
             }
 
-            // 1. First pass: Find 'correct' positions
+            // 1. First pass: Find 'correct' positions (ตำแหน่งถูกต้อง)
             for (let i = 0; i < WORD_LENGTH; i++) {
                 if (guess[i] === target[i]) {
                     results[i] = 'correct';
@@ -399,7 +395,7 @@
                 }
             }
 
-            // 2. Second pass: Find 'present' and 'absent'
+            // 2. Second pass: Find 'present' and 'absent' (ตัวอักษรถูกต้องแต่ผิดตำแหน่ง/ไม่ถูกต้อง)
             for (let i = 0; i < WORD_LENGTH; i++) {
                 if (results[i] === 'correct') continue;
 
@@ -422,7 +418,7 @@
                 // Add new color style
                 tileEl.classList.add(`tile-${results[i]}`);
 
-                // Update keyboard color (Crucial fix for color precedence)
+                // Update keyboard color (แก้ไขปัญหาลำดับความสำคัญของสี)
                 updateKeyboardColor(guess[i], results[i]);
             }
 
@@ -462,11 +458,14 @@
             }
         }
 
-        /** Captures physical keyboard presses (Desktop) */
-        function handleKeyPress(event) {
+        /** Handles physical keyboard presses (Desktop) - Attached ONCE */
+        function handlePhysicalKey(event) {
+            if (isGameOver) return;
+            
             const key = event.key;
 
             if (key === 'Enter') {
+                event.preventDefault(); 
                 handleKey('ENTER');
             } 
             // Capture and handle Backspace key from physical keyboard
@@ -481,20 +480,6 @@
             }
         }
 
-        /** * FIX: Keyboard listeners are now set up once globally (outside of init/resetGame) 
-         * The function is kept here just for reference but is NOT called by init() anymore.
-         */
-        /*
-        function setupKeyboardListeners() {
-            keyboardEl.addEventListener('click', (event) => {
-                const keyEl = event.target.closest('.key');
-                if (keyEl) {
-                    const key = keyEl.dataset.key;
-                    handleKey(key);
-                }
-            });
-        }
-        */
 
         /** Updates the color of a key on the virtual keyboard, prioritizing Correct > Present > Absent. */
         function updateKeyboardColor(char, result) {
@@ -543,11 +528,11 @@
             answerEl.textContent = targetWord;
             
             if (isWin) {
-                titleEl.textContent = "🥳 Excellent! You guessed correctly! 🥳";
+                titleEl.textContent = "🥳 ยอดเยี่ยม! คุณทายถูก! 🥳";
                 titleEl.classList.remove('text-red-600');
                 titleEl.classList.add('text-green-600');
             } else {
-                titleEl.textContent = "😔 Try again next time! 😔";
+                titleEl.textContent = "😔 ลองใหม่ครั้งหน้า! 😔";
                 titleEl.classList.remove('text-green-600');
                 titleEl.classList.add('text-red-600');
             }
@@ -584,20 +569,23 @@
 
         /** Main function to start the application */
         async function init() {
+            // Show loading screen
             loadingEl.classList.remove('hidden');
             gridEl.classList.add('hidden');
             keyboardEl.classList.add('hidden');
             
-            await fetchWords(); // Wait for dictionary loading
+            // Fetch words with infinite retry loop
+            await fetchWords(); 
             
+            // Start game once words are loaded
             initializeGame();
         }
 
         // --- Start Application ---
 
-        // FIX: Setup Keyboard Listeners only ONCE when the window loads
+        /** Attach ALL Event Listeners ONCE when the window loads. */
         window.onload = function() {
-            // Setup Virtual Keyboard Listener ONCE
+            // 1. Setup Virtual Keyboard Listener ONCE
             keyboardEl.addEventListener('click', (event) => {
                 const keyEl = event.target.closest('.key');
                 if (keyEl) {
@@ -605,7 +593,12 @@
                     handleKey(key);
                 }
             });
+
+            // 2. Setup Physical Keyboard Listener ONCE
+            // This ensures no duplicate listeners are added when the game restarts.
+            document.addEventListener('keydown', handlePhysicalKey);
             
+            // 3. Initialize the game
             init();
         };
 
