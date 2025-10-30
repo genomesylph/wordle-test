@@ -182,7 +182,7 @@
             <div class="bg-white rounded-xl shadow-2xl p-6 text-center max-w-sm w-full transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
                 <h2 id="modal-title" class="text-3xl font-extrabold mb-4 text-gray-800"></h2>
                 <!-- Updated answer text -->
-                <p class="text-xl text-gray-600 mb-6">The word you missed was: <span id="modal-answer" class="font-bold text-green-600"></span></p>
+                <p class="text-xl text-gray-600 mb-6">ANSWER: <span id="modal-answer" class="font-bold text-green-600"></span></p>
                 <!-- Updated button text -->
                 <button onclick="closeModalOnly()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 transform hover:scale-105">
                     Fine, I'll Close
@@ -513,12 +513,12 @@
             
             if (isWin) {
                 // Updated win message
-                titleEl.textContent = "🥳 Nailed It! You're a Genius! 🥳";
+                titleEl.textContent = "🐖 Nailed It! You're FAT! 🐖";
                 titleEl.classList.remove('text-red-600');
                 titleEl.classList.add('text-green-600');
             } else {
                 // Updated lose message
-                titleEl.textContent = "😔 Oof. Better Luck Next Time. The Word Was...";
+                titleEl.textContent = "🐷 Oops, not surprise that you are fat...  🐷";
                 titleEl.classList.remove('text-green-600');
                 titleEl.classList.add('text-red-600');
             }
@@ -581,3 +581,4 @@
     </script>
 </body>
 </html>
+
