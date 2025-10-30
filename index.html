@@ -66,11 +66,10 @@
             100% { transform: scale(1); }
         }
 
-        /* Keyboard button styles */
+        /* Keyboard button styles: REMOVED min-width: 43px; to fix mobile overflow */
         .key {
             height: 58px;
-            min-width: 43px;
-            flex: 1;
+            flex: 1; /* Allows keys to shrink proportionally */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -118,9 +117,10 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Mobile keyboard adjustment: Use max-w-lg for keyboard for better fit */
+        /* Mobile keyboard adjustment: Ensures keyboard fits within the screen padding */
         #keyboard {
             max-width: 500px; 
+            padding: 0 4px; /* Slight padding to prevent keys from touching screen edges */
         }
 
     </style>
@@ -135,7 +135,7 @@
                     class="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-3 rounded-lg text-sm shadow transition duration-150 transform hover:scale-105">
                 Restart
             </button>
-            <h1 class="text-4xl font-bold text-gray-800 tracking-wider border-b-2 border-gray-300 pb-2 text-center">Aomsin is fat</h1>
+            <h1 class="text-4xl font-bold text-gray-800 tracking-wider border-b-2 border-gray-300 pb-2 text-center">WORDLE</h1>
         </header>
         
         <!-- Loading Indicator -->
