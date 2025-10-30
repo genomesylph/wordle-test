@@ -86,6 +86,8 @@
         #game-grid {
             width: 100%;
             max-width: 350px; 
+            /* Custom aspect-ratio to make the 5x6 grid slightly shorter (original H/W was 1.2) */
+            aspect-ratio: 5 / 5.8; 
         }
         
         .spinner {
@@ -113,10 +115,10 @@
         
         <!-- Header Section -->
         <header class="w-full mb-6 relative">
-            <!-- Restart Button -->
+            <!-- Restart Button (Updated text) -->
             <button id="restart-button" onclick="resetGame()" 
                     class="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-3 rounded-lg text-sm shadow transition duration-150 transform hover:scale-105">
-                รีสตาร์ท (Restart)
+                Give Up & Restart
             </button>
             <h1 class="text-4xl font-bold text-gray-800 tracking-wider border-b-2 border-gray-300 pb-2 text-center">WORDLE</h1>
         </header>
@@ -124,11 +126,12 @@
         <!-- Loading Indicator -->
         <div id="loading-indicator" class="flex flex-col items-center justify-center h-full w-full my-12">
             <div class="spinner mb-4"></div>
-            <p id="loading-message" class="text-gray-600 font-semibold text-center">กำลังโหลดคำศัพท์... กรุณารอสักครู่</p>
+            <!-- Updated loading message -->
+            <p id="loading-message" class="text-gray-600 font-semibold text-center">Summoning Words... Hang Tight.</p>
         </div>
 
-        <!-- Game Grid Section -->
-        <div id="game-grid" class="grid grid-cols-5 gap-1.5 w-full aspect-[5/6] mb-8 hidden">
+        <!-- Game Grid Section (Removed aspect class, now defined in CSS) -->
+        <div id="game-grid" class="grid grid-cols-5 gap-1.5 w-full mb-8 hidden">
             <!-- Grid will be dynamically created by JavaScript -->
         </div>
 
@@ -178,9 +181,11 @@
         <div id="result-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4">
             <div class="bg-white rounded-xl shadow-2xl p-6 text-center max-w-sm w-full transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
                 <h2 id="modal-title" class="text-3xl font-extrabold mb-4 text-gray-800"></h2>
-                <p class="text-xl text-gray-600 mb-6">คำตอบคือ: <span id="modal-answer" class="font-bold text-green-600"></span></p>
+                <!-- Updated answer text -->
+                <p class="text-xl text-gray-600 mb-6">The word you missed was: <span id="modal-answer" class="font-bold text-green-600"></span></p>
+                <!-- Updated button text -->
                 <button onclick="closeModalOnly()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 transform hover:scale-105">
-                    ปิด (Close)
+                    Fine, I'll Close
                 </button>
             </div>
         </div>
@@ -189,8 +194,8 @@
 
     <script>
         // --- GLOBAL STATE ---
-        let ANSWERS = []; // คำศัพท์ที่เป็นคำตอบ
-        let VALID_GUESSES = []; // คำศัพท์ทั้งหมดที่อนุญาตให้ทาย
+        let ANSWERS = []; // Target words
+        let VALID_GUESSES = []; // All allowed guess words
         
         const WORD_LENGTH = 5;
         const MAX_GUESSES = 6;
@@ -220,7 +225,7 @@
          * until both files are successfully loaded and contain data. NO FALLBACK IS USED.
          */
         async function fetchWordsAndRetry() {
-            loadingMessageEl.textContent = "กำลังโหลดคำศัพท์... กรุณารอสักครู่";
+            loadingMessageEl.textContent = "Summoning Words... Hang Tight.";
             loadingEl.classList.remove('hidden');
 
             while (true) {
@@ -258,7 +263,8 @@
                 } catch (error) {
                     // Log error and retry
                     console.error("Error loading JSON dictionary files. Retrying in 3 seconds...", error);
-                    loadingMessageEl.textContent = `โหลดคำศัพท์ไม่สำเร็จ (${error.message})! กำลังลองใหม่อีกครั้งใน 3 วินาที...`; 
+                    // Updated error message with witty tone
+                    loadingMessageEl.textContent = `Word files missing! (Doh! ${error.message}). Retrying in 3 secs...`; 
                     await sleep(3000); // Wait 3 seconds before retrying
                 }
             }
@@ -270,7 +276,8 @@
         function initializeGame() {
             // Check if loading was successful
             if (ANSWERS.length === 0) {
-                showMessage("ข้อผิดพลาดร้ายแรง: ไม่มีคำศัพท์ให้เล่นเกม กรุณาลองรีเฟรชหน้าเว็บ", 0);
+                // Updated severe error message
+                showMessage("Fatal Error: No Words! Seriously? Refresh the page, pal.", 0);
                 isGameOver = true;
                 loadingEl.classList.remove('hidden');
                 gridEl.classList.add('hidden');
@@ -299,7 +306,8 @@
             createGrid();
             resetKeyboardColors();
 
-            console.log("Target Word (Debug): " + targetWord);
+            // Updated debug message
+            console.log("Shhh... The Target Word (Debug) is: " + targetWord);
         }
 
         /** Creates the 6x5 grid of tiles */
@@ -349,12 +357,14 @@
         /** Checks the guess and provides color feedback */
         function checkGuess() {
             if (currentGuess.length !== WORD_LENGTH) {
-                showMessage("คำศัพท์ต้องมี 5 ตัวอักษร!");
+                // Updated message
+                showMessage("Five letters only, genius.");
                 return;
             }
 
             if (!VALID_GUESSES.includes(currentGuess)) {
-                showMessage("คำศัพท์นี้ไม่อยู่ในรายการที่อนุญาต!");
+                // Updated message
+                showMessage("That's not a word, try again.");
                 return;
             }
 
@@ -502,11 +512,13 @@
             answerEl.textContent = targetWord;
             
             if (isWin) {
-                titleEl.textContent = "🥳 ยอดเยี่ยม! คุณทายถูก! 🥳";
+                // Updated win message
+                titleEl.textContent = "🥳 Nailed It! You're a Genius! 🥳";
                 titleEl.classList.remove('text-red-600');
                 titleEl.classList.add('text-green-600');
             } else {
-                titleEl.textContent = "😔 ลองใหม่ครั้งหน้า คำตอบคือ...";
+                // Updated lose message
+                titleEl.textContent = "😔 Oof. Better Luck Next Time. The Word Was...";
                 titleEl.classList.remove('text-green-600');
                 titleEl.classList.add('text-red-600');
             }
