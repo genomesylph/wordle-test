@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wordle for fat prople</title>
-    <!-- โหลด Tailwind CSS CDN เพื่อการจัดสไตล์ที่รวดเร็วและตอบสนอง -->
+    <title>Wordle</title>
+    <!-- Load Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
@@ -19,7 +19,7 @@
             padding-bottom: 2rem;
         }
 
-        /* สไตล์สำหรับช่องตัวอักษรแต่ละช่อง */
+        /* Styles for individual character tiles */
         .tile {
             width: 100%;
             height: 100%;
@@ -40,19 +40,19 @@
             animation: pop 0.1s ease-out;
         }
 
-        /* สีกรณีทายถูก */
+        /* Color for correct position */
         .tile-correct {
             background-color: #10b981; /* Green-500 */
             border-color: #10b981;
             color: white;
         }
-        /* สีกรณีมีตัวอักษร แต่ผิดตำแหน่ง */
+        /* Color for correct letter, wrong position */
         .tile-present {
             background-color: #f59e0b; /* Amber-500 */
             border-color: #f59e0b;
             color: white;
         }
-        /* สีกรณีไม่มีตัวอักษรนั้น */
+        /* Color for letter not in the word */
         .tile-absent {
             background-color: #6b7280; /* Gray-500 */
             border-color: #6b7280;
@@ -66,7 +66,7 @@
             100% { transform: scale(1); }
         }
 
-        /* สไตล์ปุ่มคีย์บอร์ด */
+        /* Keyboard button styles */
         .key {
             height: 58px;
             min-width: 43px;
@@ -93,18 +93,18 @@
             flex-grow: 1.5;
         }
 
-        /* สไตล์คีย์บอร์ดเมื่อมีการทาย */
+        /* Keyboard colors after a guess */
         .key-correct { background-color: #10b981 !important; color: white; }
         .key-present { background-color: #f59e0b !important; color: white; }
         .key-absent { background-color: #6b7280 !important; color: white; }
 
-        /* การจัดขนาด grid เพื่อให้รองรับมือถือ */
+        /* Grid sizing for mobile responsiveness */
         #game-grid {
             width: 100%;
-            max-width: 350px; /* จำกัดความกว้างสูงสุดของ Grid */
+            max-width: 350px; /* Maximum width for the grid */
         }
         
-        /* สไตล์สำหรับ Loading Spinner */
+        /* Loading Spinner style */
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             border-left-color: #10b981; /* Green-500 */
@@ -118,39 +118,44 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Mobile keyboard adjustment: Use max-w-lg for keyboard for better fit */
+        #keyboard {
+            max-width: 500px; 
+        }
+
     </style>
 </head>
 <body onkeypress="handleKeyPress(event)">
     <div id="app" class="w-full max-w-lg mx-auto p-4 flex flex-col items-center justify-between min-h-[90vh]">
         
-        <!-- ส่วนหัวข้อ (แก้ไข: เพิ่มปุ่มเริ่มใหม่ทางซ้าย) -->
+        <!-- Header Section -->
         <header class="w-full mb-6 relative">
-            <!-- ปุ่มเริ่มใหม่ (อยู่บนซ้าย) -->
+            <!-- Restart Button (Top-left) -->
             <button id="restart-button" onclick="resetGame()" 
                     class="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-3 rounded-lg text-sm shadow transition duration-150 transform hover:scale-105">
                 Restart
             </button>
-            <h1 class="text-4xl font-bold text-gray-800 tracking-wider border-b-2 border-gray-300 pb-2 text-center">AOMSIN IS FAT</h1>
+            <h1 class="text-4xl font-bold text-gray-800 tracking-wider border-b-2 border-gray-300 pb-2 text-center">Aomsin is fat</h1>
         </header>
         
         <!-- Loading Indicator -->
         <div id="loading-indicator" class="flex flex-col items-center justify-center h-full w-full my-12">
             <div class="spinner mb-4"></div>
-            <p class="text-gray-600 font-semibold">Loding dictionary...</p>
+            <p class="text-gray-600 font-semibold">Loading Dictionary...</p>
         </div>
 
 
-        <!-- ส่วนของ Grid เกม (ซ่อนไว้ก่อน) -->
+        <!-- Game Grid Section (Hidden initially) -->
         <div id="game-grid" class="grid grid-cols-5 gap-1.5 w-full aspect-[5/6] mb-8 hidden">
-            <!-- 6 แถว x 5 ช่อง จะถูกสร้างด้วย JavaScript -->
+            <!-- 6 rows x 5 tiles will be created by JavaScript -->
         </div>
 
-        <!-- กล่องข้อความ/สถานะ -->
+        <!-- Message/Status Box -->
         <div id="message-box" class="h-10 text-center text-lg font-bold text-gray-800 transition-opacity duration-300 mb-4"></div>
 
-        <!-- ส่วนของคีย์บอร์ดบนหน้าจอ (ซ่อนไว้ก่อน) -->
-        <div id="keyboard" class="w-full max-w-sm flex flex-col items-center space-y-1 hidden">
-            <!-- แถว 1 -->
+        <!-- On-Screen Keyboard Section (Hidden initially) -->
+        <div id="keyboard" class="w-full max-w-md flex flex-col items-center space-y-1 hidden">
+            <!-- Row 1: QWERTY... -->
             <div class="flex space-x-1 w-full justify-center">
                 <div class="key" data-key="Q">Q</div>
                 <div class="key" data-key="W">W</div>
@@ -163,8 +168,8 @@
                 <div class="key" data-key="O">O</div>
                 <div class="key" data-key="P">P</div>
             </div>
-            <!-- แถว 2 -->
-            <div class="flex space-x-1 w-full justify-center pl-[5%] pr-[5%]">
+            <!-- Row 2: ASDF... (Adjusted for better centering on mobile) -->
+            <div class="flex space-x-1 w-full justify-center">
                 <div class="key" data-key="A">A</div>
                 <div class="key" data-key="S">S</div>
                 <div class="key" data-key="D">D</div>
@@ -175,7 +180,7 @@
                 <div class="key" data-key="K">K</div>
                 <div class="key" data-key="L">L</div>
             </div>
-            <!-- แถว 3 -->
+            <!-- Row 3: ENTER, ZXC... BACKSPACE -->
             <div class="flex space-x-1 w-full justify-center">
                 <div class="key key-lg" data-key="ENTER">ENTER</div>
                 <div class="key" data-key="Z">Z</div>
@@ -185,19 +190,19 @@
                 <div class="key" data-key="B">B</div>
                 <div class="key" data-key="N">N</div>
                 <div class="key" data-key="M">M</div>
-                <!-- ปุ่ม BACKSPACE บนคีย์บอร์ดเสมือน -->
+                <!-- BACKSPACE virtual key -->
                 <div class="key key-lg" data-key="BACKSPACE">⌫</div>
             </div>
         </div>
 
-        <!-- Modal สำหรับแสดงผลลัพธ์ -->
+        <!-- Result Modal -->
         <div id="result-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4">
             <div class="bg-white rounded-xl shadow-2xl p-6 text-center max-w-sm w-full transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
                 <h2 id="modal-title" class="text-3xl font-extrabold mb-4 text-gray-800"></h2>
-                <p class="text-xl text-gray-600 mb-6">Answer: <span id="modal-answer" class="font-bold text-green-600"></span></p>
-                <!-- ปุ่ม "กลับ" เพื่อปิด Modal โดยไม่เริ่มเกมใหม่ -->
+                <p class="text-xl text-gray-600 mb-6">The word was: <span id="modal-answer" class="font-bold text-green-600"></span></p>
+                <!-- Button to close Modal without restarting the game -->
                 <button onclick="closeModalOnly()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 transform hover:scale-105">
-                    กลับ
+                    Close
                 </button>
             </div>
         </div>
@@ -205,11 +210,11 @@
     </div>
 
     <script>
-        // กำหนดตัวแปรสำหรับเก็บข้อมูลคำศัพท์
-        let ANSWERS = []; // คำตอบที่ถูกต้อง (จาก words-answer.json)
-        let VALID_GUESSES = []; // คำศัพท์ที่ใช้ทายได้ทั้งหมด (จาก words.json)
+        // Define variables for dictionary data
+        let ANSWERS = []; // The correct words (from words-answer.json)
+        let VALID_GUESSES = []; // All allowed guess words (from words.json)
 
-        // ข้อมูลสำรอง (Fallback) สำหรับกรณีที่โหลดไฟล์ JSON ล้มเหลว
+        // Fallback data if JSON loading fails
         const FALLBACK_ANSWERS = [
             "APPLE", "TRAIN", "HOUSE", "GRAPE", "CRANE",
             "BLAST", "PIANO", "SWEET", "FIGHT", "OCEAN"
@@ -240,57 +245,55 @@
         const modalContentEl = document.getElementById('modal-content');
         const loadingEl = document.getElementById('loading-indicator');
 
-        // --- ฟังก์ชันเตรียมเกม ---
+        // --- Game Setup Functions ---
 
-        /** โหลดคำศัพท์จากไฟล์ JSON (words.json และ words-answer.json) */
+        /** Load words from JSON files (words.json and words-answer.json) */
         async function fetchWords() {
-            // ***************************************************************
-            // ตรวจสอบโปรโตคอล file:// เพื่อหลีกเลี่ยงข้อผิดพลาด CORS
-            // ***************************************************************
+            // Check for file:// protocol to avoid CORS issues
             if (window.location.protocol === 'file:') {
-                console.warn("ตรวจพบการรันบน file:// protocol: ไม่สามารถโหลดไฟล์ JSON ภายนอกได้เนื่องจากข้อจำกัดด้านความปลอดภัย (CORS). กำลังใช้คำศัพท์สำรอง (FALLBACK) แทน");
+                console.warn("Running on file:// protocol: Cannot load external JSON files due to security restrictions (CORS). Using fallback dictionary.");
                 ANSWERS = FALLBACK_ANSWERS;
-                // ตรวจสอบให้แน่ใจว่าคำตอบทั้งหมดอยู่ในรายการคำที่ทายได้
+                // Ensure all answers are in the valid guess list
                 VALID_GUESSES = [...FALLBACK_GUESSES, ...FALLBACK_ANSWERS];
-                // แสดงข้อความแจ้งเตือนผู้ใช้ชั่วคราว
-                showMessage("รันในเครื่อง: ใช้คำศัพท์สำรองเนื่องจากข้อจำกัดด้านความปลอดภัย", 5000);
+                // Show temporary warning to the user
+                showMessage("Running locally: Using fallback dictionary due to security restrictions", 5000);
             } else {
                 try {
-                    // 1. ดึงคำตอบ
+                    // 1. Fetch answers
                     const answersResponse = await fetch('words-answer.json');
                     const answersData = await answersResponse.json();
                     ANSWERS = answersData;
                     
-                    // 2. ดึงคำศัพท์ทั้งหมดที่ใช้ทาย
+                    // 2. Fetch all allowed guesses
                     const guessesResponse = await fetch('words.json');
                     const guessesData = await guessesResponse.json();
                     VALID_GUESSES = guessesData;
                     
                 } catch (error) {
-                    console.error("เกิดข้อผิดพลาดในการโหลดไฟล์ JSON:", error);
+                    console.error("Error loading JSON dictionary files:", error);
                     
-                    // Fallback: ใช้ข้อมูลสำรองเพื่อให้เกมยังเล่นได้
+                    // Fallback: Use built-in dictionary
                     ANSWERS = FALLBACK_ANSWERS;
                     VALID_GUESSES = FALLBACK_GUESSES;
 
-                    // แสดงข้อความแจ้งเตือนผู้ใช้
-                    showMessage("ไม่สามารถโหลดไฟล์คำศัพท์ได้! กำลังใช้คำศัพท์ภาษาอังกฤษสำรอง (โปรดตรวจสอบไฟล์ JSON)", 5000);
+                    // Show notification to the user
+                    showMessage("Could not load dictionary! Using fallback English words (check JSON files)", 5000);
                 }
             }
-            // ***************************************************************
+            
 
-            // ประมวลผลคำศัพท์ที่โหลดมา (หรือจาก Fallback)
+            // Process loaded (or fallback) words
             if (ANSWERS.length === 0) {
-                 // กรณี Fallback ล้มเหลวด้วย (โอกาสน้อย)
+                 // Fallback if the first attempt failed
                  ANSWERS = FALLBACK_ANSWERS; 
                  VALID_GUESSES = [...FALLBACK_GUESSES, ...FALLBACK_ANSWERS];
             }
 
-            // ทำให้คำตอบทั้งหมดเป็นตัวพิมพ์ใหญ่
+            // Convert all words to uppercase
             ANSWERS = ANSWERS.map(word => String(word).toUpperCase());
             VALID_GUESSES = VALID_GUESSES.map(word => String(word).toUpperCase());
 
-            // ตรวจสอบให้แน่ใจว่าคำตอบทั้งหมดอยู่ในรายการคำที่ทายได้
+            // Ensure all answers are in the valid guess list
             for (const answer of ANSWERS) {
                 if (!VALID_GUESSES.includes(answer)) {
                     VALID_GUESSES.push(answer);
@@ -298,63 +301,63 @@
             }
         }
 
-        /** สุ่มเลือกคำตอบและตั้งค่าเริ่มต้นเกม */
+        /** Randomly selects the target word and initializes game state */
         function initializeGame() {
-            // ซ่อน Loading และแสดง Grid/Keyboard
+            // Hide Loading and show Grid/Keyboard
             loadingEl.classList.add('hidden');
             gridEl.classList.remove('hidden');
             keyboardEl.classList.remove('hidden');
 
             if (ANSWERS.length === 0) {
-                showMessage("ข้อผิดพลาด: ไม่มีคำศัพท์สำหรับเล่นเกม กรุณาตรวจสอบไฟล์ JSON.", 10000);
+                showMessage("Error: No words loaded! Please check the JSON files.", 10000);
                 isGameOver = true;
                 return;
             }
 
-            // เลือกคำตอบแบบสุ่ม
+            // Select a random answer
             const randomIndex = Math.floor(Math.random() * ANSWERS.length);
             targetWord = ANSWERS[randomIndex];
 
-            // รีเซ็ตสถานะเกม
+            // Reset game state
             currentGuess = "";
             currentRow = 0;
             isGameOver = false;
 
-            // ล้างหน้าจอ
+            // Clear display
             gridEl.innerHTML = '';
             messageBoxEl.textContent = '';
             
             createGrid();
             resetKeyboardColors();
 
-            console.log("คำตอบ: " + targetWord); // สำหรับการดีบัก
+            console.log("Target Word: " + targetWord); // For debugging
         }
 
-        /** สร้าง Grid ช่องตัวอักษร 6 แถว x 5 ช่อง */
+        /** Creates the 6x5 grid of tiles */
         function createGrid() {
             for (let i = 0; i < MAX_GUESSES; i++) {
                 for (let j = 0; j < WORD_LENGTH; j++) {
                     const tile = document.createElement('div');
                     tile.className = 'tile rounded-lg';
-                    // กำหนด ID ให้แต่ละช่องเพื่อให้อัปเดตง่าย
+                    // Assign ID to each tile for easy update
                     tile.id = `tile-${i}-${j}`;
                     gridEl.appendChild(tile);
                 }
             }
         }
 
-        // --- ฟังก์ชันการเล่นเกม ---
+        // --- Game Logic Functions ---
 
-        /** แสดงตัวอักษรบนช่องปัจจุบัน */
+        /** Displays the current guess on the grid */
         function updateDisplay() {
-            // ล้างแถวปัจจุบันก่อน
+            // Clear the current row first
             for (let i = 0; i < WORD_LENGTH; i++) {
                 const tileEl = document.getElementById(`tile-${currentRow}-${i}`);
                 tileEl.textContent = '';
                 tileEl.classList.remove('tile-filled');
             }
 
-            // เขียนตัวอักษรลงไป
+            // Write characters
             for (let i = 0; i < currentGuess.length; i++) {
                 const tileEl = document.getElementById(`tile-${currentRow}-${i}`);
                 tileEl.textContent = currentGuess[i];
@@ -362,7 +365,7 @@
             }
         }
 
-        /** แสดงข้อความสถานะชั่วคราว */
+        /** Displays a temporary status message */
         function showMessage(message, duration = 2000) {
             messageBoxEl.textContent = message;
             messageBoxEl.style.opacity = '1';
@@ -371,15 +374,15 @@
             }, duration);
         }
 
-        /** ตรวจสอบและให้สี feedback เมื่อผู้เล่นกด ENTER */
+        /** Checks the guess and provides color feedback when ENTER is pressed */
         function checkGuess() {
             if (currentGuess.length !== WORD_LENGTH) {
-                showMessage("MUST BE A 5-LETTER WORD!");
+                showMessage("Word is not 5 letters long!");
                 return;
             }
 
             if (!VALID_GUESSES.includes(currentGuess)) {
-                showMessage("INVALID WORD!");
+                showMessage("Word is not in the allowed list!");
                 return;
             }
 
@@ -387,13 +390,13 @@
             const guess = currentGuess;
             const results = Array(WORD_LENGTH).fill('absent'); // 'correct', 'present', 'absent'
             
-            // ใช้ Map เพื่อติดตามตัวอักษรที่เหลือในคำตอบ
+            // Use a Map to track remaining characters in the target word
             const targetMap = new Map();
             for (const char of target) {
                 targetMap.set(char, (targetMap.get(char) || 0) + 1);
             }
 
-            // 1. หาตำแหน่งที่ 'correct' ก่อน
+            // 1. First pass: Find 'correct' positions
             for (let i = 0; i < WORD_LENGTH; i++) {
                 if (guess[i] === target[i]) {
                     results[i] = 'correct';
@@ -401,7 +404,7 @@
                 }
             }
 
-            // 2. หาตำแหน่งที่ 'present' และ 'absent'
+            // 2. Second pass: Find 'present' and 'absent'
             for (let i = 0; i < WORD_LENGTH; i++) {
                 if (results[i] === 'correct') continue;
 
@@ -414,34 +417,34 @@
                 }
             }
 
-            // 3. นำผลลัพธ์ไปแสดงบน Grid และ Keyboard
+            // 3. Apply results to Grid and Keyboard
             for (let i = 0; i < WORD_LENGTH; i++) {
                 const tileEl = document.getElementById(`tile-${currentRow}-${i}`);
                 
-                // ลบสีเดิมทั้งหมด
+                // Remove previous styles
                 tileEl.classList.remove('tile-filled');
                 
-                // เพิ่มสีใหม่
+                // Add new color style
                 tileEl.classList.add(`tile-${results[i]}`);
 
-                // อัปเดตสีบนคีย์บอร์ด
+                // Update keyboard color
                 updateKeyboardColor(guess[i], results[i]);
             }
 
-            // 4. ตรวจสอบเงื่อนไขจบเกม
+            // 4. Check end game conditions
             if (guess === target) {
-                endGame(true); // ชนะ
+                endGame(true); // Win
             } else if (currentRow === MAX_GUESSES - 1) {
-                endGame(false); // แพ้
+                endGame(false); // Lose
             } else {
                 currentRow++;
                 currentGuess = "";
             }
         }
 
-        // --- ฟังก์ชันจัดการคีย์บอร์ด ---
+        // --- Keyboard Handling Functions ---
 
-        /** จัดการการกดแป้นพิมพ์จากทั้งแป้นจริงและแป้นบนหน้าจอ */
+        /** Handles key press from both physical and virtual keyboards */
         function handleKey(key) {
             if (isGameOver) return;
 
@@ -450,45 +453,40 @@
             if (normalizedKey === 'ENTER') {
                 checkGuess();
             } 
-            // ***************************************************************
-            // ตรรกะสำหรับการลบตัวอักษร (BACKSPACE)
-            // ***************************************************************
+            // Logic for backspace/delete
             else if (normalizedKey === 'BACKSPACE' || normalizedKey === 'DEL') {
-                // ลบตัวอักษรสุดท้ายออกจาก currentGuess
+                // Remove the last character from currentGuess
                 currentGuess = currentGuess.slice(0, -1);
-                // อัปเดตหน้าจอเพื่อลบตัวอักษรออกจาก Grid
+                // Update the display to reflect the deletion
                 updateDisplay();
             } 
-            // ***************************************************************
+            // Logic for character input
             else if (normalizedKey.length === 1 && /^[A-Z]$/.test(normalizedKey) && currentGuess.length < WORD_LENGTH) {
                 currentGuess += normalizedKey;
                 updateDisplay();
             }
         }
 
-        /** ดักจับการกดแป้นพิมพ์จริง (สำหรับ Desktop) */
+        /** Captures physical keyboard presses (Desktop) */
         function handleKeyPress(event) {
-            // ตรวจสอบ event.key เพื่อรองรับ Backspace, Enter และตัวอักษร
             const key = event.key;
 
             if (key === 'Enter') {
                 handleKey('ENTER');
             } 
-            // ***************************************************************
-            // ตรวจสอบและจัดการปุ่ม Backspace บนคีย์บอร์ดจริง
-            // ***************************************************************
+            // Capture and handle Backspace key from physical keyboard
             else if (key === 'Backspace') {
-                // ต้องป้องกันการทำงานเริ่มต้นของ Backspace เพื่อไม่ให้ย้อนกลับหน้า
+                // Prevent default browser behavior (like navigating back)
                 event.preventDefault(); 
                 handleKey('BACKSPACE');
             } 
-            // ***************************************************************
+            // Capture letter keys
             else if (key.length === 1 && /^[a-zA-Z]$/.test(key)) {
                 handleKey(key.toUpperCase());
             }
         }
 
-        /** ตั้งค่า Event Listener สำหรับคีย์บอร์ดบนหน้าจอ */
+        /** Sets up Event Listeners for the virtual on-screen keyboard */
         function setupKeyboardListeners() {
             keyboardEl.addEventListener('click', (event) => {
                 const keyEl = event.target.closest('.key');
@@ -499,17 +497,17 @@
             });
         }
 
-        /** อัปเดตสีของปุ่มบนคีย์บอร์ด */
+        /** Updates the color of a key on the virtual keyboard */
         function updateKeyboardColor(char, result) {
             const keyEl = keyboardEl.querySelector(`[data-key="${char}"]`);
             if (!keyEl) return;
 
             const classes = ['key-correct', 'key-present', 'key-absent'];
 
-            // ลบสีที่มีอยู่ (ถ้ามี)
+            // Remove existing colors
             classes.forEach(cls => keyEl.classList.remove(cls));
 
-            // กำหนดลำดับความสำคัญของสี (Correct > Present > Absent)
+            // Apply color based on precedence (Correct > Present > Absent)
             if (result === 'correct') {
                 keyEl.classList.add('key-correct');
             } else if (result === 'present' && !keyEl.classList.contains('key-correct')) {
@@ -519,20 +517,20 @@
             }
         }
 
-        /** รีเซ็ตสีของปุ่มคีย์บอร์ดทั้งหมด */
+        /** Resets all virtual keyboard key colors to default */
         function resetKeyboardColors() {
             const keys = keyboardEl.querySelectorAll('.key');
             const classes = ['key-correct', 'key-present', 'key-absent'];
             keys.forEach(key => {
                 classes.forEach(cls => key.classList.remove(cls));
-                key.style.backgroundColor = ''; // คืนค่าสีเดิม (Gray-300 จาก Tailwind)
+                key.style.backgroundColor = ''; // Revert to default Tailwind color
                 key.style.color = '#1f2937';
             });
         }
 
-        // --- ฟังก์ชันจบเกม ---
+        // --- End Game Functions ---
 
-        /** จัดการเมื่อเกมจบ (ชนะ/แพ้) */
+        /** Handles game conclusion (win/loss) */
         function endGame(isWin) {
             isGameOver = true;
             
@@ -542,11 +540,11 @@
             answerEl.textContent = targetWord;
             
             if (isWin) {
-                titleEl.textContent = "🥳 CORRECT 🥳";
+                titleEl.textContent = "🥳 Excellent! You guessed correctly! 🥳";
                 titleEl.classList.remove('text-red-600');
                 titleEl.classList.add('text-green-600');
             } else {
-                titleEl.textContent = "😔 WRONG 😔";
+                titleEl.textContent = "😔 Try again next time! 😔";
                 titleEl.classList.remove('text-green-600');
                 titleEl.classList.add('text-red-600');
             }
@@ -554,11 +552,11 @@
             showModal();
         }
 
-        /** แสดง Modal ผลลัพธ์ */
+        /** Displays the result modal */
         function showModal() {
             modalEl.classList.remove('hidden', 'opacity-0');
             modalEl.classList.add('flex');
-            // ทำให้ Modal ค่อยๆ ปรากฏขึ้น
+            // Animate the modal appearance
             setTimeout(() => {
                 modalEl.classList.remove('opacity-0');
                 modalContentEl.classList.remove('scale-95', 'opacity-0');
@@ -566,7 +564,7 @@
             }, 10);
         }
 
-        /** ปิด Modal โดยไม่รีเซ็ตเกม (เพื่อให้ผู้เล่นกลับไปดูหน้าจอผลลัพธ์สุดท้าย) */
+        /** Closes the modal without restarting the game */
         function closeModalOnly() {
             modalEl.classList.remove('flex');
             modalEl.classList.add('hidden', 'opacity-0');
@@ -574,26 +572,26 @@
             modalContentEl.classList.add('scale-95', 'opacity-0');
         }
 
-        /** ปิด Modal และเริ่มเกมใหม่ */
+        /** Closes the modal and starts a new game */
         function resetGame() {
-            closeModalOnly(); // ปิด Modal ก่อน
-            // เริ่มการทำงานทั้งหมดใหม่ตั้งแต่การโหลดคำศัพท์
+            closeModalOnly(); // Close modal first
+            // Restart the entire initialization process
             init(); 
         }
 
-        /** ฟังก์ชันหลักสำหรับเริ่มต้นเกม */
+        /** Main function to start the application */
         async function init() {
             loadingEl.classList.remove('hidden');
             gridEl.classList.add('hidden');
             keyboardEl.classList.add('hidden');
             
-            await fetchWords(); // รอโหลดคำศัพท์ให้เสร็จก่อน
+            await fetchWords(); // Wait for dictionary loading
             
             initializeGame();
             setupKeyboardListeners();
         }
 
-        // --- เริ่มต้นแอปพลิเคชัน ---
+        // --- Start Application ---
         window.onload = function() {
             init();
         };
@@ -601,7 +599,3 @@
     </script>
 </body>
 </html>
-
-
-
-
