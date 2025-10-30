@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle (ภาษาไทย)</title>
+    <!-- โหลด Tailwind CSS CDN เพื่อการจัดสไตล์ที่รวดเร็วและตอบสนอง -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        /* สไตล์สำหรับช่องตัวอักษรแต่ละช่อง */
+        .tile {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.75rem; /* 28px */
+            font-weight: 700;
+            color: #1f2937; /* Gray-800 */
+            border: 2px solid #d1d5db; /* Gray-300 */
+            transition: all 0.2s ease-in-out;
+            user-select: none;
+            cursor: default;
+        }
+
+        .tile-filled {
+            border-color: #9ca3af; /* Gray-400 */
+            animation: pop 0.1s ease-out;
+        }
+
+        /* สีกรณีทายถูก */
+        .tile-correct {
+            background-color: #10b981; /* Green-500 */
+            border-color: #10b981;
+            color: white;
+        }
+        /* สีกรณีมีตัวอักษร แต่ผิดตำแหน่ง */
+        .tile-present {
+            background-color: #f59e0b; /* Amber-500 */
+            border-color: #f59e0b;
+            color: white;
+        }
+        /* สีกรณีไม่มีตัวอักษรนั้น */
+        .tile-absent {
+            background-color: #6b7280; /* Gray-500 */
+            border-color: #6b7280;
+            color: white;
+        }
+
+        /* Animation when tile is filled */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* สไตล์ปุ่มคีย์บอร์ด */
+        .key {
+            height: 58px;
+            min-width: 43px;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #1f2937;
+            background-color: #d1d5db; /* Gray-300 */
+            border-radius: 4px;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.1s;
+        }
+
+        .key:active {
+            filter: brightness(0.9);
+        }
+
+        .key-lg {
+            flex-grow: 1.5;
+        }
+
+        /* สไตล์คีย์บอร์ดเมื่อมีการทาย */
+        .key-correct { background-color: #10b981 !important; color: white; }
+        .key-present { background-color: #f59e0b !important; color: white; }
+        .key-absent { background-color: #6b7280 !important; color: white; }
+
+        /* การจัดขนาด grid เพื่อให้รองรับมือถือ */
+        #game-grid {
+            width: 100%;
+            max-width: 350px; /* จำกัดความกว้างสูงสุดของ Grid */
+        }
+        
+        /* สไตล์สำหรับ Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #10b981; /* Green-500 */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body onkeypress="handleKeyPress(event)">
+    <div id="app" class="w-full max-w-lg mx-auto p-4 flex flex-col items-center justify-between min-h-[90vh]">
+        
+        <!-- ส่วนหัวข้อ (แก้ไข: เพิ่มปุ่มเริ่มใหม่ทางซ้าย) -->
+        <header class="w-full mb-6 relative">
+            <!-- ปุ่มเริ่มใหม่ (อยู่บนซ้าย) -->
+            <button id="restart-button" onclick="resetGame()" 
+                    class="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-3 rounded-lg text-sm shadow transition duration-150 transform hover:scale-105">
+                เริ่มใหม่
+            </button>
+            <h1 class="text-4xl font-bold text-gray-800 tracking-wider border-b-2 border-gray-300 pb-2 text-center">WORDLE TH</h1>
+        </header>
+        
+        <!-- Loading Indicator -->
+        <div id="loading-indicator" class="flex flex-col items-center justify-center h-full w-full my-12">
+            <div class="spinner mb-4"></div>
+            <p class="text-gray-600 font-semibold">กำลังโหลดคำศัพท์...</p>
+        </div>
+
+
+        <!-- ส่วนของ Grid เกม (ซ่อนไว้ก่อน) -->
+        <div id="game-grid" class="grid grid-cols-5 gap-1.5 w-full aspect-[5/6] mb-8 hidden">
+            <!-- 6 แถว x 5 ช่อง จะถูกสร้างด้วย JavaScript -->
+        </div>
+
+        <!-- กล่องข้อความ/สถานะ -->
+        <div id="message-box" class="h-10 text-center text-lg font-bold text-gray-800 transition-opacity duration-300 mb-4"></div>
+
+        <!-- ส่วนของคีย์บอร์ดบนหน้าจอ (ซ่อนไว้ก่อน) -->
+        <div id="keyboard" class="w-full max-w-sm flex flex-col items-center space-y-1 hidden">
+            <!-- แถว 1 -->
+            <div class="flex space-x-1 w-full justify-center">
+                <div class="key" data-key="Q">Q</div>
+                <div class="key" data-key="W">W</div>
+                <div class="key" data-key="E">E</div>
+                <div class="key" data-key="R">R</div>
+                <div class="key" data-key="T">T</div>
+                <div class="key" data-key="Y">Y</div>
+                <div class="key" data-key="U">U</div>
+                <div class="key" data-key="I">I</div>
+                <div class="key" data-key="O">O</div>
+                <div class="key" data-key="P">P</div>
+            </div>
+            <!-- แถว 2 -->
+            <div class="flex space-x-1 w-full justify-center pl-[5%] pr-[5%]">
+                <div class="key" data-key="A">A</div>
+                <div class="key" data-key="S">S</div>
+                <div class="key" data-key="D">D</div>
+                <div class="key" data-key="F">F</div>
+                <div class="key" data-key="G">G</div>
+                <div class="key" data-key="H">H</div>
+                <div class="key" data-key="J">J</div>
+                <div class="key" data-key="K">K</div>
+                <div class="key" data-key="L">L</div>
+            </div>
+            <!-- แถว 3 -->
+            <div class="flex space-x-1 w-full justify-center">
+                <div class="key key-lg" data-key="ENTER">ENTER</div>
+                <div class="key" data-key="Z">Z</div>
+                <div class="key" data-key="X">X</div>
+                <div class="key" data-key="C">C</div>
+                <div class="key" data-key="V">V</div>
+                <div class="key" data-key="B">B</div>
+                <div class="key" data-key="N">N</div>
+                <div class="key" data-key="M">M</div>
+                <!-- ปุ่ม BACKSPACE บนคีย์บอร์ดเสมือน -->
+                <div class="key key-lg" data-key="BACKSPACE">⌫</div>
+            </div>
+        </div>
+
+        <!-- Modal สำหรับแสดงผลลัพธ์ -->
+        <div id="result-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl p-6 text-center max-w-sm w-full transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
+                <h2 id="modal-title" class="text-3xl font-extrabold mb-4 text-gray-800"></h2>
+                <p class="text-xl text-gray-600 mb-6">Answer: <span id="modal-answer" class="font-bold text-green-600"></span></p>
+                <!-- ปุ่ม "กลับ" เพื่อปิด Modal โดยไม่เริ่มเกมใหม่ -->
+                <button onclick="closeModalOnly()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 transform hover:scale-105">
+                    กลับ
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // กำหนดตัวแปรสำหรับเก็บข้อมูลคำศัพท์
+        let ANSWERS = []; // คำตอบที่ถูกต้อง (จาก words-answer.json)
+        let VALID_GUESSES = []; // คำศัพท์ที่ใช้ทายได้ทั้งหมด (จาก words.json)
+
+        // ข้อมูลสำรอง (Fallback) สำหรับกรณีที่โหลดไฟล์ JSON ล้มเหลว
+        const FALLBACK_ANSWERS = [
+            "APPLE", "TRAIN", "HOUSE", "GRAPE", "CRANE",
+            "BLAST", "PIANO", "SWEET", "FIGHT", "OCEAN"
+        ];
+        const FALLBACK_GUESSES = [
+            "ABOVE", "ABOUT", "ACUTE", "ADMIT", "ALIVE", "BLAST",
+            "CRANE", "DRIVE", "EAGER", "EATEN", "ERROR", "FIBER",
+            "FLASH", "FOUND", "GRADE", "HEART", "HELLO", "IMAGE",
+            "JOINT", "KNIFE", "LIGHT", "MANGO", "OCEAN", "OFTEN",
+            "PLANT", "POWER", "QUICK", "SIGHT", "SMART", "SWEET",
+            "TABLE", "TIGER", "TRAIN", "VOICE", "WATER", "WHALE",
+            "WIDOW", "WORLD", "YIELD",
+        ];
+
+
+        const WORD_LENGTH = 5;
+        const MAX_GUESSES = 6;
+
+        let targetWord = "";
+        let currentGuess = "";
+        let currentRow = 0;
+        let isGameOver = false;
+
+        const gridEl = document.getElementById('game-grid');
+        const messageBoxEl = document.getElementById('message-box');
+        const keyboardEl = document.getElementById('keyboard');
+        const modalEl = document.getElementById('result-modal');
+        const modalContentEl = document.getElementById('modal-content');
+        const loadingEl = document.getElementById('loading-indicator');
+
+        // --- ฟังก์ชันเตรียมเกม ---
+
+        /** โหลดคำศัพท์จากไฟล์ JSON (words.json และ words-answer.json) */
+        async function fetchWords() {
+            // ***************************************************************
+            // ตรวจสอบโปรโตคอล file:// เพื่อหลีกเลี่ยงข้อผิดพลาด CORS
+            // ***************************************************************
+            if (window.location.protocol === 'file:') {
+                console.warn("ตรวจพบการรันบน file:// protocol: ไม่สามารถโหลดไฟล์ JSON ภายนอกได้เนื่องจากข้อจำกัดด้านความปลอดภัย (CORS). กำลังใช้คำศัพท์สำรอง (FALLBACK) แทน");
+                ANSWERS = FALLBACK_ANSWERS;
+                // ตรวจสอบให้แน่ใจว่าคำตอบทั้งหมดอยู่ในรายการคำที่ทายได้
+                VALID_GUESSES = [...FALLBACK_GUESSES, ...FALLBACK_ANSWERS];
+                // แสดงข้อความแจ้งเตือนผู้ใช้ชั่วคราว
+                showMessage("รันในเครื่อง: ใช้คำศัพท์สำรองเนื่องจากข้อจำกัดด้านความปลอดภัย", 5000);
+            } else {
+                try {
+                    // 1. ดึงคำตอบ
+                    const answersResponse = await fetch('words-answer.json');
+                    const answersData = await answersResponse.json();
+                    ANSWERS = answersData;
+                    
+                    // 2. ดึงคำศัพท์ทั้งหมดที่ใช้ทาย
+                    const guessesResponse = await fetch('words.json');
+                    const guessesData = await guessesResponse.json();
+                    VALID_GUESSES = guessesData;
+                    
+                } catch (error) {
+                    console.error("เกิดข้อผิดพลาดในการโหลดไฟล์ JSON:", error);
+                    
+                    // Fallback: ใช้ข้อมูลสำรองเพื่อให้เกมยังเล่นได้
+                    ANSWERS = FALLBACK_ANSWERS;
+                    VALID_GUESSES = FALLBACK_GUESSES;
+
+                    // แสดงข้อความแจ้งเตือนผู้ใช้
+                    showMessage("ไม่สามารถโหลดไฟล์คำศัพท์ได้! กำลังใช้คำศัพท์ภาษาอังกฤษสำรอง (โปรดตรวจสอบไฟล์ JSON)", 5000);
+                }
+            }
+            // ***************************************************************
+
+            // ประมวลผลคำศัพท์ที่โหลดมา (หรือจาก Fallback)
+            if (ANSWERS.length === 0) {
+                 // กรณี Fallback ล้มเหลวด้วย (โอกาสน้อย)
+                 ANSWERS = FALLBACK_ANSWERS; 
+                 VALID_GUESSES = [...FALLBACK_GUESSES, ...FALLBACK_ANSWERS];
+            }
+
+            // ทำให้คำตอบทั้งหมดเป็นตัวพิมพ์ใหญ่
+            ANSWERS = ANSWERS.map(word => String(word).toUpperCase());
+            VALID_GUESSES = VALID_GUESSES.map(word => String(word).toUpperCase());
+
+            // ตรวจสอบให้แน่ใจว่าคำตอบทั้งหมดอยู่ในรายการคำที่ทายได้
+            for (const answer of ANSWERS) {
+                if (!VALID_GUESSES.includes(answer)) {
+                    VALID_GUESSES.push(answer);
+                }
+            }
+        }
+
+        /** สุ่มเลือกคำตอบและตั้งค่าเริ่มต้นเกม */
+        function initializeGame() {
+            // ซ่อน Loading และแสดง Grid/Keyboard
+            loadingEl.classList.add('hidden');
+            gridEl.classList.remove('hidden');
+            keyboardEl.classList.remove('hidden');
+
+            if (ANSWERS.length === 0) {
+                showMessage("ข้อผิดพลาด: ไม่มีคำศัพท์สำหรับเล่นเกม กรุณาตรวจสอบไฟล์ JSON.", 10000);
+                isGameOver = true;
+                return;
+            }
+
+            // เลือกคำตอบแบบสุ่ม
+            const randomIndex = Math.floor(Math.random() * ANSWERS.length);
+            targetWord = ANSWERS[randomIndex];
+
+            // รีเซ็ตสถานะเกม
+            currentGuess = "";
+            currentRow = 0;
+            isGameOver = false;
+
+            // ล้างหน้าจอ
+            gridEl.innerHTML = '';
+            messageBoxEl.textContent = '';
+            
+            createGrid();
+            resetKeyboardColors();
+
+            console.log("คำตอบ: " + targetWord); // สำหรับการดีบัก
+        }
+
+        /** สร้าง Grid ช่องตัวอักษร 6 แถว x 5 ช่อง */
+        function createGrid() {
+            for (let i = 0; i < MAX_GUESSES; i++) {
+                for (let j = 0; j < WORD_LENGTH; j++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'tile rounded-lg';
+                    // กำหนด ID ให้แต่ละช่องเพื่อให้อัปเดตง่าย
+                    tile.id = `tile-${i}-${j}`;
+                    gridEl.appendChild(tile);
+                }
+            }
+        }
+
+        // --- ฟังก์ชันการเล่นเกม ---
+
+        /** แสดงตัวอักษรบนช่องปัจจุบัน */
+        function updateDisplay() {
+            // ล้างแถวปัจจุบันก่อน
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                const tileEl = document.getElementById(`tile-${currentRow}-${i}`);
+                tileEl.textContent = '';
+                tileEl.classList.remove('tile-filled');
+            }
+
+            // เขียนตัวอักษรลงไป
+            for (let i = 0; i < currentGuess.length; i++) {
+                const tileEl = document.getElementById(`tile-${currentRow}-${i}`);
+                tileEl.textContent = currentGuess[i];
+                tileEl.classList.add('tile-filled');
+            }
+        }
+
+        /** แสดงข้อความสถานะชั่วคราว */
+        function showMessage(message, duration = 2000) {
+            messageBoxEl.textContent = message;
+            messageBoxEl.style.opacity = '1';
+            setTimeout(() => {
+                messageBoxEl.style.opacity = '0';
+            }, duration);
+        }
+
+        /** ตรวจสอบและให้สี feedback เมื่อผู้เล่นกด ENTER */
+        function checkGuess() {
+            if (currentGuess.length !== WORD_LENGTH) {
+                showMessage("MUST BE A 5-LETTER WORD!");
+                return;
+            }
+
+            if (!VALID_GUESSES.includes(currentGuess)) {
+                showMessage("INVALID WORD!");
+                return;
+            }
+
+            const target = targetWord;
+            const guess = currentGuess;
+            const results = Array(WORD_LENGTH).fill('absent'); // 'correct', 'present', 'absent'
+            
+            // ใช้ Map เพื่อติดตามตัวอักษรที่เหลือในคำตอบ
+            const targetMap = new Map();
+            for (const char of target) {
+                targetMap.set(char, (targetMap.get(char) || 0) + 1);
+            }
+
+            // 1. หาตำแหน่งที่ 'correct' ก่อน
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                if (guess[i] === target[i]) {
+                    results[i] = 'correct';
+                    targetMap.set(guess[i], targetMap.get(guess[i]) - 1);
+                }
+            }
+
+            // 2. หาตำแหน่งที่ 'present' และ 'absent'
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                if (results[i] === 'correct') continue;
+
+                const char = guess[i];
+                if (targetMap.has(char) && targetMap.get(char) > 0) {
+                    results[i] = 'present';
+                    targetMap.set(char, targetMap.get(char) - 1);
+                } else {
+                    results[i] = 'absent';
+                }
+            }
+
+            // 3. นำผลลัพธ์ไปแสดงบน Grid และ Keyboard
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                const tileEl = document.getElementById(`tile-${currentRow}-${i}`);
+                
+                // ลบสีเดิมทั้งหมด
+                tileEl.classList.remove('tile-filled');
+                
+                // เพิ่มสีใหม่
+                tileEl.classList.add(`tile-${results[i]}`);
+
+                // อัปเดตสีบนคีย์บอร์ด
+                updateKeyboardColor(guess[i], results[i]);
+            }
+
+            // 4. ตรวจสอบเงื่อนไขจบเกม
+            if (guess === target) {
+                endGame(true); // ชนะ
+            } else if (currentRow === MAX_GUESSES - 1) {
+                endGame(false); // แพ้
+            } else {
+                currentRow++;
+                currentGuess = "";
+            }
+        }
+
+        // --- ฟังก์ชันจัดการคีย์บอร์ด ---
+
+        /** จัดการการกดแป้นพิมพ์จากทั้งแป้นจริงและแป้นบนหน้าจอ */
+        function handleKey(key) {
+            if (isGameOver) return;
+
+            const normalizedKey = key.toUpperCase();
+
+            if (normalizedKey === 'ENTER') {
+                checkGuess();
+            } 
+            // ***************************************************************
+            // ตรรกะสำหรับการลบตัวอักษร (BACKSPACE)
+            // ***************************************************************
+            else if (normalizedKey === 'BACKSPACE' || normalizedKey === 'DEL') {
+                // ลบตัวอักษรสุดท้ายออกจาก currentGuess
+                currentGuess = currentGuess.slice(0, -1);
+                // อัปเดตหน้าจอเพื่อลบตัวอักษรออกจาก Grid
+                updateDisplay();
+            } 
+            // ***************************************************************
+            else if (normalizedKey.length === 1 && /^[A-Z]$/.test(normalizedKey) && currentGuess.length < WORD_LENGTH) {
+                currentGuess += normalizedKey;
+                updateDisplay();
+            }
+        }
+
+        /** ดักจับการกดแป้นพิมพ์จริง (สำหรับ Desktop) */
+        function handleKeyPress(event) {
+            // ตรวจสอบ event.key เพื่อรองรับ Backspace, Enter และตัวอักษร
+            const key = event.key;
+
+            if (key === 'Enter') {
+                handleKey('ENTER');
+            } 
+            // ***************************************************************
+            // ตรวจสอบและจัดการปุ่ม Backspace บนคีย์บอร์ดจริง
+            // ***************************************************************
+            else if (key === 'Backspace') {
+                // ต้องป้องกันการทำงานเริ่มต้นของ Backspace เพื่อไม่ให้ย้อนกลับหน้า
+                event.preventDefault(); 
+                handleKey('BACKSPACE');
+            } 
+            // ***************************************************************
+            else if (key.length === 1 && /^[a-zA-Z]$/.test(key)) {
+                handleKey(key.toUpperCase());
+            }
+        }
+
+        /** ตั้งค่า Event Listener สำหรับคีย์บอร์ดบนหน้าจอ */
+        function setupKeyboardListeners() {
+            keyboardEl.addEventListener('click', (event) => {
+                const keyEl = event.target.closest('.key');
+                if (keyEl) {
+                    const key = keyEl.dataset.key;
+                    handleKey(key);
+                }
+            });
+        }
+
+        /** อัปเดตสีของปุ่มบนคีย์บอร์ด */
+        function updateKeyboardColor(char, result) {
+            const keyEl = keyboardEl.querySelector(`[data-key="${char}"]`);
+            if (!keyEl) return;
+
+            const classes = ['key-correct', 'key-present', 'key-absent'];
+
+            // ลบสีที่มีอยู่ (ถ้ามี)
+            classes.forEach(cls => keyEl.classList.remove(cls));
+
+            // กำหนดลำดับความสำคัญของสี (Correct > Present > Absent)
+            if (result === 'correct') {
+                keyEl.classList.add('key-correct');
+            } else if (result === 'present' && !keyEl.classList.contains('key-correct')) {
+                keyEl.classList.add('key-present');
+            } else if (result === 'absent' && !keyEl.classList.contains('key-correct') && !keyEl.classList.contains('key-present')) {
+                keyEl.classList.add('key-absent');
+            }
+        }
+
+        /** รีเซ็ตสีของปุ่มคีย์บอร์ดทั้งหมด */
+        function resetKeyboardColors() {
+            const keys = keyboardEl.querySelectorAll('.key');
+            const classes = ['key-correct', 'key-present', 'key-absent'];
+            keys.forEach(key => {
+                classes.forEach(cls => key.classList.remove(cls));
+                key.style.backgroundColor = ''; // คืนค่าสีเดิม (Gray-300 จาก Tailwind)
+                key.style.color = '#1f2937';
+            });
+        }
+
+        // --- ฟังก์ชันจบเกม ---
+
+        /** จัดการเมื่อเกมจบ (ชนะ/แพ้) */
+        function endGame(isWin) {
+            isGameOver = true;
+            
+            const titleEl = document.getElementById('modal-title');
+            const answerEl = document.getElementById('modal-answer');
+
+            answerEl.textContent = targetWord;
+            
+            if (isWin) {
+                titleEl.textContent = "🥳 CORRECT 🥳";
+                titleEl.classList.remove('text-red-600');
+                titleEl.classList.add('text-green-600');
+            } else {
+                titleEl.textContent = "😔 WRONG 😔";
+                titleEl.classList.remove('text-green-600');
+                titleEl.classList.add('text-red-600');
+            }
+
+            showModal();
+        }
+
+        /** แสดง Modal ผลลัพธ์ */
+        function showModal() {
+            modalEl.classList.remove('hidden', 'opacity-0');
+            modalEl.classList.add('flex');
+            // ทำให้ Modal ค่อยๆ ปรากฏขึ้น
+            setTimeout(() => {
+                modalEl.classList.remove('opacity-0');
+                modalContentEl.classList.remove('scale-95', 'opacity-0');
+                modalContentEl.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        /** ปิด Modal โดยไม่รีเซ็ตเกม (เพื่อให้ผู้เล่นกลับไปดูหน้าจอผลลัพธ์สุดท้าย) */
+        function closeModalOnly() {
+            modalEl.classList.remove('flex');
+            modalEl.classList.add('hidden', 'opacity-0');
+            modalContentEl.classList.remove('scale-100', 'opacity-100');
+            modalContentEl.classList.add('scale-95', 'opacity-0');
+        }
+
+        /** ปิด Modal และเริ่มเกมใหม่ */
+        function resetGame() {
+            closeModalOnly(); // ปิด Modal ก่อน
+            // เริ่มการทำงานทั้งหมดใหม่ตั้งแต่การโหลดคำศัพท์
+            init(); 
+        }
+
+        /** ฟังก์ชันหลักสำหรับเริ่มต้นเกม */
+        async function init() {
+            loadingEl.classList.remove('hidden');
+            gridEl.classList.add('hidden');
+            keyboardEl.classList.add('hidden');
+            
+            await fetchWords(); // รอโหลดคำศัพท์ให้เสร็จก่อน
+            
+            initializeGame();
+            setupKeyboardListeners();
+        }
+
+        // --- เริ่มต้นแอปพลิเคชัน ---
+        window.onload = function() {
+            init();
+        };
+
+    </script>
+</body>
+</html>
