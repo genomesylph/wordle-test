@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wordle</title>
+    <title>Wordle Clone</title>
     <!-- Load Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -26,50 +26,35 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 1.75rem; /* 28px */
+            font-size: 1.75rem; 
             font-weight: 700;
-            color: #1f2937; /* Gray-800 */
-            border: 2px solid #d1d5db; /* Gray-300 */
+            color: #1f2937; 
+            border: 2px solid #d1d5db; 
             transition: all 0.2s ease-in-out;
             user-select: none;
             cursor: default;
         }
 
         .tile-filled {
-            border-color: #9ca3af; /* Gray-400 */
+            border-color: #9ca3af; 
             animation: pop 0.1s ease-out;
         }
 
-        /* Color for correct position */
-        .tile-correct {
-            background-color: #10b981; /* Green-500 */
-            border-color: #10b981;
-            color: white;
-        }
-        /* Color for correct letter, wrong position */
-        .tile-present {
-            background-color: #f59e0b; /* Amber-500 */
-            border-color: #f59e0b;
-            color: white;
-        }
-        /* Color for letter not in the word */
-        .tile-absent {
-            background-color: #6b7280; /* Gray-500 */
-            border-color: #6b7280;
-            color: white;
-        }
+        /* Colors */
+        .tile-correct { background-color: #10b981; border-color: #10b981; color: white; }
+        .tile-present { background-color: #f59e0b; border-color: #f59e0b; color: white; }
+        .tile-absent { background-color: #6b7280; border-color: #6b7280; color: white; }
 
-        /* Animation when tile is filled */
         @keyframes pop {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
 
-        /* Keyboard button styles: Ensure flexibility for mobile screen */
+        /* Keyboard button styles */
         .key {
             height: 58px;
-            flex: 1; /* Allows keys to shrink proportionally */
+            flex: 1; 
             display: flex;
             justify-content: center;
             align-items: center;
@@ -92,22 +77,20 @@
             flex-grow: 1.5;
         }
 
-        /* Keyboard colors after a guess */
-        /* IMPORTANT: Use !important to ensure these styles override the default background color */
+        /* Keyboard colors - MUST use !important for precedence */
         .key-correct { background-color: #10b981 !important; color: white; }
         .key-present { background-color: #f59e0b !important; color: white; }
         .key-absent { background-color: #6b7280 !important; color: white; }
 
-        /* Grid sizing for mobile responsiveness */
+        /* Mobile responsiveness and centering */
         #game-grid {
             width: 100%;
-            max-width: 350px; /* Maximum width for the grid */
+            max-width: 350px; 
         }
         
-        /* Loading Spinner style */
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #10b981; /* Green-500 */
+            border-left-color: #10b981; 
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -118,7 +101,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Mobile keyboard adjustment: Ensures keyboard fits within the screen padding */
         #keyboard {
             max-width: 500px; 
             padding: 0 4px; 
@@ -131,10 +113,10 @@
         
         <!-- Header Section -->
         <header class="w-full mb-6 relative">
-            <!-- Restart Button (Top-left) -->
+            <!-- Restart Button -->
             <button id="restart-button" onclick="resetGame()" 
                     class="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-3 rounded-lg text-sm shadow transition duration-150 transform hover:scale-105">
-                Restart
+                รีสตาร์ท (Restart)
             </button>
             <h1 class="text-4xl font-bold text-gray-800 tracking-wider border-b-2 border-gray-300 pb-2 text-center">WORDLE</h1>
         </header>
@@ -142,21 +124,20 @@
         <!-- Loading Indicator -->
         <div id="loading-indicator" class="flex flex-col items-center justify-center h-full w-full my-12">
             <div class="spinner mb-4"></div>
-            <p id="loading-message" class="text-gray-600 font-semibold">Loading Dictionary...</p>
+            <p id="loading-message" class="text-gray-600 font-semibold text-center">กำลังโหลดคำศัพท์... กรุณารอสักครู่</p>
         </div>
 
-
-        <!-- Game Grid Section (Hidden initially) -->
+        <!-- Game Grid Section -->
         <div id="game-grid" class="grid grid-cols-5 gap-1.5 w-full aspect-[5/6] mb-8 hidden">
-            <!-- 6 rows x 5 tiles will be created by JavaScript -->
+            <!-- Grid will be dynamically created by JavaScript -->
         </div>
 
         <!-- Message/Status Box -->
         <div id="message-box" class="h-10 text-center text-lg font-bold text-gray-800 transition-opacity duration-300 mb-4"></div>
 
-        <!-- On-Screen Keyboard Section (Hidden initially) -->
+        <!-- On-Screen Keyboard Section -->
         <div id="keyboard" class="w-full max-w-md flex flex-col items-center space-y-1 hidden">
-            <!-- Row 1: QWERTY... -->
+            <!-- Keyboard Rows (Standard QWERTY layout) -->
             <div class="flex space-x-1 w-full justify-center">
                 <div class="key" data-key="Q">Q</div>
                 <div class="key" data-key="W">W</div>
@@ -169,7 +150,6 @@
                 <div class="key" data-key="O">O</div>
                 <div class="key" data-key="P">P</div>
             </div>
-            <!-- Row 2: ASDF... (Adjusted for better centering on mobile) -->
             <div class="flex space-x-1 w-full justify-center">
                 <div class="key" data-key="A">A</div>
                 <div class="key" data-key="S">S</div>
@@ -181,7 +161,6 @@
                 <div class="key" data-key="K">K</div>
                 <div class="key" data-key="L">L</div>
             </div>
-            <!-- Row 3: ENTER, ZXC... BACKSPACE -->
             <div class="flex space-x-1 w-full justify-center">
                 <div class="key key-lg" data-key="ENTER">ENTER</div>
                 <div class="key" data-key="Z">Z</div>
@@ -191,7 +170,6 @@
                 <div class="key" data-key="B">B</div>
                 <div class="key" data-key="N">N</div>
                 <div class="key" data-key="M">M</div>
-                <!-- BACKSPACE virtual key -->
                 <div class="key key-lg" data-key="BACKSPACE">⌫</div>
             </div>
         </div>
@@ -200,10 +178,9 @@
         <div id="result-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4">
             <div class="bg-white rounded-xl shadow-2xl p-6 text-center max-w-sm w-full transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
                 <h2 id="modal-title" class="text-3xl font-extrabold mb-4 text-gray-800"></h2>
-                <p class="text-xl text-gray-600 mb-6">The word was: <span id="modal-answer" class="font-bold text-green-600"></span></p>
-                <!-- Button to close Modal without restarting the game -->
+                <p class="text-xl text-gray-600 mb-6">คำตอบคือ: <span id="modal-answer" class="font-bold text-green-600"></span></p>
                 <button onclick="closeModalOnly()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 transform hover:scale-105">
-                    Close
+                    ปิด (Close)
                 </button>
             </div>
         </div>
@@ -211,10 +188,10 @@
     </div>
 
     <script>
-        // Define variables for dictionary data
-        let ANSWERS = []; // คำตอบที่ถูกต้อง
-        let VALID_GUESSES = []; // คำที่อนุญาตให้ใช้ในการทาย
-
+        // --- GLOBAL STATE ---
+        let ANSWERS = []; // คำศัพท์ที่เป็นคำตอบ
+        let VALID_GUESSES = []; // คำศัพท์ทั้งหมดที่อนุญาตให้ทาย
+        
         const WORD_LENGTH = 5;
         const MAX_GUESSES = 6;
 
@@ -223,6 +200,7 @@
         let currentRow = 0;
         let isGameOver = false;
 
+        // --- DOM Elements ---
         const gridEl = document.getElementById('game-grid');
         const messageBoxEl = document.getElementById('message-box');
         const keyboardEl = document.getElementById('keyboard');
@@ -236,71 +214,74 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        // --- Game Setup Functions ---
+        // --- CORE ASYNCHRONOUS LOGIC: FETCH & RETRY ---
 
-        /** * Load words from JSON files (words.json and words-answer.json).
-         * This function will retry indefinitely until successful, as requested.
+        /** * Fetches words from JSON files. This function includes an infinite retry loop 
+         * until both files are successfully loaded and contain data. NO FALLBACK IS USED.
          */
-        async function fetchWords() {
-            // Show persistent loading indicator
+        async function fetchWordsAndRetry() {
             loadingMessageEl.textContent = "กำลังโหลดคำศัพท์... กรุณารอสักครู่";
             loadingEl.classList.remove('hidden');
 
             while (true) {
                 try {
-                    // 1. Fetch answers (คำตอบที่ถูกต้อง)
+                    // 1. Fetch answers (words-answer.json)
                     const answersResponse = await fetch('words-answer.json');
                     if (!answersResponse.ok) throw new Error('Failed to fetch answers file.');
                     const answersData = await answersResponse.json();
-                    ANSWERS = answersData;
                     
-                    // 2. Fetch all allowed guesses (คำที่อนุญาตให้ทาย)
+                    // 2. Fetch all allowed guesses (words.json)
                     const guessesResponse = await fetch('words.json');
                     if (!guessesResponse.ok) throw new Error('Failed to fetch words file.');
                     const guessesData = await guessesResponse.json();
-                    VALID_GUESSES = guessesData;
                     
-                    // Check if words were actually loaded
-                    if (ANSWERS.length === 0 || VALID_GUESSES.length === 0) {
-                        throw new Error('Dictionary files were loaded but are empty.');
+                    // 3. Validation
+                    const answers = answersData.map(word => String(word).toUpperCase());
+                    let guesses = guessesData.map(word => String(word).toUpperCase());
+                    
+                    if (answers.length === 0 || guesses.length === 0) {
+                        throw new Error('Dictionary files were loaded but contain no words.');
+                    }
+                    
+                    // Ensure all answers are valid guesses
+                    for (const answer of answers) {
+                        if (!guesses.includes(answer)) {
+                            guesses.push(answer);
+                        }
                     }
 
-                    // If we reach here, fetching was successful.
+                    // Store results globally and break the loop
+                    ANSWERS = answers;
+                    VALID_GUESSES = guesses;
                     break; 
 
                 } catch (error) {
+                    // Log error and retry
                     console.error("Error loading JSON dictionary files. Retrying in 3 seconds...", error);
-                    loadingMessageEl.textContent = "โหลดคำศัพท์ไม่สำเร็จ! กำลังลองใหม่อีกครั้งใน 3 วินาที..."; 
+                    loadingMessageEl.textContent = `โหลดคำศัพท์ไม่สำเร็จ (${error.message})! กำลังลองใหม่อีกครั้งใน 3 วินาที...`; 
                     await sleep(3000); // Wait 3 seconds before retrying
                 }
             }
-            
-            // Post-processing: Convert all words to uppercase
-            ANSWERS = ANSWERS.map(word => String(word).toUpperCase());
-            VALID_GUESSES = VALID_GUESSES.map(word => String(word).toUpperCase());
-
-            // Ensure all answers are in the valid guess list
-            for (const answer of ANSWERS) {
-                if (!VALID_GUESSES.includes(answer)) {
-                    VALID_GUESSES.push(answer);
-                }
-            }
-            
-            // Clear loading message once successful (handled in initializeGame)
         }
+
+        // --- GAME INITIALIZATION & SETUP ---
 
         /** Randomly selects the target word and initializes game state */
         function initializeGame() {
+            // Check if loading was successful
+            if (ANSWERS.length === 0) {
+                showMessage("ข้อผิดพลาดร้ายแรง: ไม่มีคำศัพท์ให้เล่นเกม กรุณาลองรีเฟรชหน้าเว็บ", 0);
+                isGameOver = true;
+                loadingEl.classList.remove('hidden');
+                gridEl.classList.add('hidden');
+                keyboardEl.classList.add('hidden');
+                return;
+            }
+
             // Hide Loading and show Grid/Keyboard
             loadingEl.classList.add('hidden');
             gridEl.classList.remove('hidden');
             keyboardEl.classList.remove('hidden');
-
-            if (ANSWERS.length === 0) {
-                showMessage("ข้อผิดพลาด: ไม่สามารถโหลดคำศัพท์ได้แม้จะพยายามซ้ำแล้ว", 10000);
-                isGameOver = true;
-                return;
-            }
 
             // Select a random answer
             const randomIndex = Math.floor(Math.random() * ANSWERS.length);
@@ -311,14 +292,14 @@
             currentRow = 0;
             isGameOver = false;
 
-            // Clear display
+            // Clear display and keyboard
             gridEl.innerHTML = '';
             messageBoxEl.textContent = '';
             
             createGrid();
             resetKeyboardColors();
 
-            console.log("Target Word: " + targetWord); // For debugging
+            console.log("Target Word (Debug): " + targetWord);
         }
 
         /** Creates the 6x5 grid of tiles */
@@ -327,25 +308,26 @@
                 for (let j = 0; j < WORD_LENGTH; j++) {
                     const tile = document.createElement('div');
                     tile.className = 'tile rounded-lg';
-                    // Assign ID to each tile for easy update
                     tile.id = `tile-${i}-${j}`;
                     gridEl.appendChild(tile);
                 }
             }
         }
 
-        // --- Game Logic Functions ---
+        // --- GAMEPLAY LOGIC ---
 
         /** Displays the current guess on the grid */
         function updateDisplay() {
-            // Clear the current row first
+            // 1. Clear the current row
             for (let i = 0; i < WORD_LENGTH; i++) {
                 const tileEl = document.getElementById(`tile-${currentRow}-${i}`);
-                tileEl.textContent = '';
-                tileEl.classList.remove('tile-filled');
+                if (i >= currentGuess.length) {
+                    tileEl.textContent = '';
+                    tileEl.classList.remove('tile-filled');
+                }
             }
 
-            // Write characters
+            // 2. Write characters
             for (let i = 0; i < currentGuess.length; i++) {
                 const tileEl = document.getElementById(`tile-${currentRow}-${i}`);
                 tileEl.textContent = currentGuess[i];
@@ -357,7 +339,6 @@
         function showMessage(message, duration = 2000) {
             messageBoxEl.textContent = message;
             messageBoxEl.style.opacity = '1';
-            // Duration = 0 means persistent message (do not fade out)
             if (duration > 0) {
                 setTimeout(() => {
                     messageBoxEl.style.opacity = '0';
@@ -365,7 +346,7 @@
             }
         }
 
-        /** Checks the guess and provides color feedback when ENTER is pressed */
+        /** Checks the guess and provides color feedback */
         function checkGuess() {
             if (currentGuess.length !== WORD_LENGTH) {
                 showMessage("คำศัพท์ต้องมี 5 ตัวอักษร!");
@@ -379,15 +360,15 @@
 
             const target = targetWord;
             const guess = currentGuess;
-            const results = Array(WORD_LENGTH).fill('absent'); // 'correct', 'present', 'absent'
+            const results = Array(WORD_LENGTH).fill('absent'); 
             
-            // ใช้ Map เพื่อติดตามตัวอักษรที่เหลืออยู่ในคำตอบ
+            // Map to track remaining letters in target word for accurate 'present' check
             const targetMap = new Map();
             for (const char of target) {
                 targetMap.set(char, (targetMap.get(char) || 0) + 1);
             }
 
-            // 1. First pass: Find 'correct' positions (ตำแหน่งถูกต้อง)
+            // 1. First pass: Find 'correct' positions (Green)
             for (let i = 0; i < WORD_LENGTH; i++) {
                 if (guess[i] === target[i]) {
                     results[i] = 'correct';
@@ -395,7 +376,7 @@
                 }
             }
 
-            // 2. Second pass: Find 'present' and 'absent' (ตัวอักษรถูกต้องแต่ผิดตำแหน่ง/ไม่ถูกต้อง)
+            // 2. Second pass: Find 'present' (Orange)
             for (let i = 0; i < WORD_LENGTH; i++) {
                 if (results[i] === 'correct') continue;
 
@@ -403,22 +384,20 @@
                 if (targetMap.has(char) && targetMap.get(char) > 0) {
                     results[i] = 'present';
                     targetMap.set(char, targetMap.get(char) - 1);
-                } else {
-                    results[i] = 'absent';
                 }
+                // If it's not correct and not present (map count is 0), it remains 'absent'
             }
 
             // 3. Apply results to Grid and Keyboard
             for (let i = 0; i < WORD_LENGTH; i++) {
                 const tileEl = document.getElementById(`tile-${currentRow}-${i}`);
                 
-                // Remove previous styles
-                tileEl.classList.remove('tile-filled');
-                
-                // Add new color style
+                // Add color style
                 tileEl.classList.add(`tile-${results[i]}`);
+                // Ensure pop animation and remove temporary filled style
+                tileEl.classList.remove('tile-filled');
 
-                // Update keyboard color (แก้ไขปัญหาลำดับความสำคัญของสี)
+                // Update keyboard color with correct precedence
                 updateKeyboardColor(guess[i], results[i]);
             }
 
@@ -428,12 +407,13 @@
             } else if (currentRow === MAX_GUESSES - 1) {
                 endGame(false); // Lose
             } else {
+                // Advance to next row
                 currentRow++;
                 currentGuess = "";
             }
         }
 
-        // --- Keyboard Handling Functions ---
+        // --- KEYBOARD & INPUT MANAGEMENT ---
 
         /** Handles key press from both physical and virtual keyboards */
         function handleKey(key) {
@@ -444,21 +424,18 @@
             if (normalizedKey === 'ENTER') {
                 checkGuess();
             } 
-            // Logic for backspace/delete
             else if (normalizedKey === 'BACKSPACE' || normalizedKey === 'DEL') {
-                // Remove the last character from currentGuess
                 currentGuess = currentGuess.slice(0, -1);
-                // Update the display to reflect the deletion
                 updateDisplay();
             } 
-            // Logic for character input
+            // Only accept single capital letters and ensure word length limit
             else if (normalizedKey.length === 1 && /^[A-Z]$/.test(normalizedKey) && currentGuess.length < WORD_LENGTH) {
                 currentGuess += normalizedKey;
                 updateDisplay();
             }
         }
 
-        /** Handles physical keyboard presses (Desktop) - Attached ONCE */
+        /** Handles physical keyboard presses (Attached only once on window load) */
         function handlePhysicalKey(event) {
             if (isGameOver) return;
             
@@ -468,13 +445,10 @@
                 event.preventDefault(); 
                 handleKey('ENTER');
             } 
-            // Capture and handle Backspace key from physical keyboard
             else if (key === 'Backspace') {
-                // Prevent default browser behavior (like navigating back)
                 event.preventDefault(); 
                 handleKey('BACKSPACE');
             } 
-            // Capture letter keys
             else if (key.length === 1 && /^[a-zA-Z]$/.test(key)) {
                 handleKey(key.toUpperCase());
             }
@@ -486,21 +460,21 @@
             const keyEl = keyboardEl.querySelector(`[data-key="${char}"]`);
             if (!keyEl) return;
 
-            // Get current color state
+            // Get current color state (check for existing higher priority colors)
             const isCorrect = keyEl.classList.contains('key-correct');
             const isPresent = keyEl.classList.contains('key-present');
             
-            // Logic for precedence: Green (Correct) > Orange (Present) > Gray (Absent)
+            // Priority Check: Correct > Present > Absent
             if (result === 'correct') {
-                // Always set to correct if we find a correct letter
+                // Green always wins
                 keyEl.classList.remove('key-present', 'key-absent');
                 keyEl.classList.add('key-correct');
             } else if (result === 'present' && !isCorrect) {
-                // Only set to present if it is not already correct
+                // Orange wins over gray, but not over green
                 keyEl.classList.remove('key-absent');
                 keyEl.classList.add('key-present');
             } else if (result === 'absent' && !isCorrect && !isPresent) {
-                // Only set to absent if it is neither correct nor present
+                // Gray only applies if neither green nor orange is present
                 keyEl.classList.add('key-absent');
             }
         }
@@ -511,14 +485,14 @@
             const classes = ['key-correct', 'key-present', 'key-absent'];
             keys.forEach(key => {
                 classes.forEach(cls => key.classList.remove(cls));
-                key.style.backgroundColor = ''; // Revert to default Tailwind color
+                // Reset custom styles if they were applied
+                key.style.backgroundColor = ''; 
                 key.style.color = '#1f2937';
             });
         }
 
-        // --- End Game Functions ---
+        // --- MODAL & GAME END ---
 
-        /** Handles game conclusion (win/loss) */
         function endGame(isWin) {
             isGameOver = true;
             
@@ -532,7 +506,7 @@
                 titleEl.classList.remove('text-red-600');
                 titleEl.classList.add('text-green-600');
             } else {
-                titleEl.textContent = "😔 ลองใหม่ครั้งหน้า! 😔";
+                titleEl.textContent = "😔 ลองใหม่ครั้งหน้า คำตอบคือ...";
                 titleEl.classList.remove('text-green-600');
                 titleEl.classList.add('text-red-600');
             }
@@ -540,52 +514,43 @@
             showModal();
         }
 
-        /** Displays the result modal */
         function showModal() {
-            modalEl.classList.remove('hidden', 'opacity-0');
+            modalEl.classList.remove('hidden');
             modalEl.classList.add('flex');
-            // Animate the modal appearance
             setTimeout(() => {
-                modalEl.classList.remove('opacity-0');
                 modalContentEl.classList.remove('scale-95', 'opacity-0');
                 modalContentEl.classList.add('scale-100', 'opacity-100');
             }, 10);
         }
 
-        /** Closes the modal without restarting the game */
         function closeModalOnly() {
             modalEl.classList.remove('flex');
-            modalEl.classList.add('hidden', 'opacity-0');
+            modalEl.classList.add('hidden');
             modalContentEl.classList.remove('scale-100', 'opacity-100');
             modalContentEl.classList.add('scale-95', 'opacity-0');
         }
 
-        /** Closes the modal and starts a new game */
+        /** Handles restarting the game (by re-initializing) */
         function resetGame() {
-            closeModalOnly(); // Close modal first
-            // Restart the entire initialization process
-            init(); 
+            closeModalOnly(); 
+            // No need to refetch words, just re-initialize the game state
+            initializeGame(); 
         }
 
-        /** Main function to start the application */
+        /** Main entry point for the application, handles initial setup including word loading */
         async function init() {
-            // Show loading screen
-            loadingEl.classList.remove('hidden');
-            gridEl.classList.add('hidden');
-            keyboardEl.classList.add('hidden');
+            // 1. Fetch words (with infinite retry)
+            await fetchWordsAndRetry(); 
             
-            // Fetch words with infinite retry loop
-            await fetchWords(); 
-            
-            // Start game once words are loaded
+            // 2. Start game once words are loaded
             initializeGame();
         }
 
-        // --- Start Application ---
+        // --- APPLICATION STARTUP ---
 
         /** Attach ALL Event Listeners ONCE when the window loads. */
         window.onload = function() {
-            // 1. Setup Virtual Keyboard Listener ONCE
+            // 1. Virtual Keyboard Listener (Attached only once)
             keyboardEl.addEventListener('click', (event) => {
                 const keyEl = event.target.closest('.key');
                 if (keyEl) {
@@ -594,11 +559,10 @@
                 }
             });
 
-            // 2. Setup Physical Keyboard Listener ONCE
-            // This ensures no duplicate listeners are added when the game restarts.
+            // 2. Physical Keyboard Listener (Attached only once, fixing the 'AA' bug)
             document.addEventListener('keydown', handlePhysicalKey);
             
-            // 3. Initialize the game
+            // 3. Start the game flow
             init();
         };
 
